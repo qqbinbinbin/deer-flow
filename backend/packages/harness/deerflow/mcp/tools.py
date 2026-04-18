@@ -54,6 +54,21 @@ def _make_sync_tool_wrapper(coro: Callable[..., Any], tool_name: str) -> Callabl
     return sync_wrapper
 
 
+def _normalize_prefixed_tool_name(tool_name: str) -> str:
+    """Collapse duplicated MCP server prefix when the tool already includes it.
+
+    Example:
+      fuxi_fuxi.core.query_object_types -> fuxi.core.query_object_types
+    """
+    if "_" not in tool_name:
+        return tool_name
+
+    server_prefix, remainder = tool_name.split("_", 1)
+    if remainder.startswith(f"{server_prefix}."):
+        return remainder
+    return tool_name
+
+
 async def get_mcp_tools() -> list[BaseTool]:
     """Get all tools from enabled MCP servers.
 
@@ -125,6 +140,10 @@ async def get_mcp_tools() -> list[BaseTool]:
 
         # Patch tools to support sync invocation, as deerflow client streams synchronously
         for tool in tools:
+            normalized_name = _normalize_prefixed_tool_name(tool.name)
+            if normalized_name != tool.name:
+                logger.info("Normalizing duplicated MCP tool prefix: %s -> %s", tool.name, normalized_name)
+                tool.name = normalized_name
             if getattr(tool, "func", None) is None and getattr(tool, "coroutine", None) is not None:
                 tool.func = _make_sync_tool_wrapper(tool.coroutine, tool.name)
 
