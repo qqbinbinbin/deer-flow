@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 from deerflow.utils.file_conversion import (
     _ASYNC_THRESHOLD_BYTES,
     _MIN_CHARS_PER_PAGE,
+    CONVERTIBLE_EXTENSIONS,
     MAX_OUTLINE_ENTRIES,
     _do_convert,
     _get_pdf_converter,
@@ -96,6 +97,10 @@ class TestPymupdfOutputTooSparse:
 
 class TestDoConvert:
     """Verify that _do_convert routes to the right sub-converter."""
+
+    def test_convertible_extensions_include_macro_enabled_excel(self):
+        """Customer datasets include .xlsm files; upload auto-conversion must include them."""
+        assert ".xlsm" in CONVERTIBLE_EXTENSIONS
 
     def test_non_pdf_always_uses_markitdown(self, tmp_path):
         """DOCX / XLSX / PPTX always go through MarkItDown regardless of setting."""

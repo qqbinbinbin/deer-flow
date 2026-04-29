@@ -439,7 +439,7 @@ Content-Type: multipart/form-data
 **Supported Document Formats** (auto-converted to Markdown):
 - PDF (`.pdf`)
 - PowerPoint (`.ppt`, `.pptx`)
-- Excel (`.xls`, `.xlsx`)
+- Excel (`.xls`, `.xlsx`, `.xlsm`)
 - Word (`.doc`, `.docx`)
 
 #### List Uploaded Files

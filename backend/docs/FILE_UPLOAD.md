@@ -89,7 +89,7 @@ DELETE /api/threads/{thread_id}/uploads/{filename}
 以下格式在显式启用 `uploads.auto_convert_documents: true` 时会自动转换为 Markdown：
 - PDF (`.pdf`)
 - PowerPoint (`.ppt`, `.pptx`)
-- Excel (`.xls`, `.xlsx`)
+- Excel (`.xls`, `.xlsx`, `.xlsm`)
 - Word (`.doc`, `.docx`)
 
 转换后的 Markdown 文件会保存在同一目录下，文件名为原文件名 + `.md` 扩展名。

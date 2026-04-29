@@ -30,6 +30,7 @@ CONVERTIBLE_EXTENSIONS = {
     ".pptx",
     ".xls",
     ".xlsx",
+    ".xlsm",
     ".doc",
     ".docx",
 }
