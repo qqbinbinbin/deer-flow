@@ -746,6 +746,7 @@ dependencies = [
     { name = "markdownify" },
     { name = "markitdown", extra = ["all", "xlsx"] },
     { name = "pydantic" },
+    { name = "pymupdf4llm" },
     { name = "pyyaml" },
     { name = "readabilipy" },
     { name = "tavily-python" },
@@ -755,9 +756,6 @@ dependencies = [
 [package.optional-dependencies]
 ollama = [
     { name = "langchain-ollama" },
-]
-pymupdf = [
-    { name = "pymupdf4llm" },
 ]
 
 [package.metadata]
@@ -788,13 +786,13 @@ requires-dist = [
     { name = "markdownify", specifier = ">=1.2.2" },
     { name = "markitdown", extras = ["all", "xlsx"], specifier = ">=0.0.1a2" },
     { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "pymupdf4llm", marker = "extra == 'pymupdf'", specifier = ">=0.0.17" },
+    { name = "pymupdf4llm", specifier = ">=0.0.17" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "readabilipy", specifier = ">=0.3.0" },
     { name = "tavily-python", specifier = ">=0.7.17" },
     { name = "tiktoken", specifier = ">=0.8.0" },
 ]
-provides-extras = ["ollama", "pymupdf"]
+provides-extras = ["ollama"]
 
 [[package]]
 name = "defusedxml"
