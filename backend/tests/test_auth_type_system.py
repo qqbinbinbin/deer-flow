@@ -669,6 +669,29 @@ def test_login_https_sets_secure_cookie():
     assert "secure" in cookie_header.lower()
 
 
+def test_logout_get_clears_access_and_csrf_cookies():
+    """GET logout is a server-rendered recovery path for stale HttpOnly cookies."""
+    _setup_config()
+    client = _get_auth_client()
+    resp = client.get(
+        "/api/v1/auth/logout",
+        cookies={
+            "access_token": "stale-access-token",
+            "csrf_token": "stale-csrf-token",
+        },
+    )
+    assert resp.status_code == 200
+    set_cookie_headers = _get_set_cookie_headers(resp)
+    assert any(
+        header.lower().startswith("access_token=") and "max-age=0" in header.lower()
+        for header in set_cookie_headers
+    )
+    assert any(
+        header.lower().startswith("csrf_token=") and "max-age=0" in header.lower()
+        for header in set_cookie_headers
+    )
+
+
 def test_csrf_cookie_secure_on_https():
     """HTTPS register → csrf_token cookie has secure flag but NOT httponly."""
     _setup_config()

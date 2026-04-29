@@ -145,6 +145,15 @@ def _set_session_cookie(response: Response, token: str, request: Request) -> Non
     )
 
 
+def _clear_session_cookies(response: Response, request: Request) -> None:
+    """Clear auth cookies created by the gateway."""
+    from app.gateway.csrf_middleware import CSRF_COOKIE_NAME
+
+    is_https = is_secure_request(request)
+    response.delete_cookie(key="access_token", secure=is_https, samesite="lax")
+    response.delete_cookie(key=CSRF_COOKIE_NAME, secure=is_https, samesite="strict")
+
+
 # ── Rate Limiting ────────────────────────────────────────────────────────
 # In-process dict — not shared across workers.
 #
@@ -325,7 +334,18 @@ async def register(request: Request, response: Response, body: RegisterRequest):
 @router.post("/logout", response_model=MessageResponse)
 async def logout(request: Request, response: Response):
     """Logout current user by clearing the cookie."""
-    response.delete_cookie(key="access_token", secure=is_secure_request(request), samesite="lax")
+    _clear_session_cookies(response, request)
+    return MessageResponse(message="Successfully logged out")
+
+
+@router.get("/logout", response_model=MessageResponse)
+async def logout_get(request: Request, response: Response):
+    """Logout current user by clearing cookies.
+
+    GET is kept as a recovery path for server-rendered links that need to
+    reset a stale HttpOnly session cookie before JavaScript is available.
+    """
+    _clear_session_cookies(response, request)
     return MessageResponse(message="Successfully logged out")
 
 

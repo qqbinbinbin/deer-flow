@@ -17,6 +17,7 @@ from starlette.responses import JSONResponse
 from starlette.types import ASGIApp
 
 from app.gateway.auth.errors import AuthErrorCode, AuthErrorResponse
+from app.gateway.csrf_middleware import CSRF_COOKIE_NAME, is_secure_request
 from app.gateway.authz import _ALL_PERMISSIONS, AuthContext
 from app.gateway.internal_auth import INTERNAL_AUTH_HEADER_NAME, get_internal_user, is_valid_internal_auth_token
 from deerflow.runtime.user_context import reset_current_user, set_current_user
@@ -47,6 +48,15 @@ def _is_public(path: str) -> bool:
     if stripped in _PUBLIC_EXACT_PATHS:
         return True
     return any(path.startswith(prefix) for prefix in _PUBLIC_PATH_PREFIXES)
+
+
+def _auth_401_response(request: Request, detail: dict, *, clear_session: bool = False) -> JSONResponse:
+    response = JSONResponse(status_code=401, content={"detail": detail})
+    if clear_session:
+        is_https = is_secure_request(request)
+        response.delete_cookie(key="access_token", secure=is_https, samesite="lax")
+        response.delete_cookie(key=CSRF_COOKIE_NAME, secure=is_https, samesite="strict")
+    return response
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -82,14 +92,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         # Non-public path: require session cookie
         if internal_user is None and not request.cookies.get("access_token"):
-            return JSONResponse(
-                status_code=401,
-                content={
-                    "detail": AuthErrorResponse(
-                        code=AuthErrorCode.NOT_AUTHENTICATED,
-                        message="Authentication required",
-                    ).model_dump()
-                },
+            return _auth_401_response(
+                request,
+                AuthErrorResponse(
+                    code=AuthErrorCode.NOT_AUTHENTICATED,
+                    message="Authentication required",
+                ).model_dump(),
             )
 
         # Strict JWT validation: reject junk/expired tokens with 401
@@ -111,6 +119,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             try:
                 user = await get_current_user_from_request(request)
             except HTTPException as exc:
+                if exc.status_code == 401:
+                    return _auth_401_response(request, exc.detail, clear_session=True)
                 return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
         # Stamp both request.state.user (for the contextvar pattern)

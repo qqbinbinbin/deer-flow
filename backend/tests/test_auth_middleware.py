@@ -165,8 +165,23 @@ def test_protected_path_with_junk_cookie_rejected(client):
     """Junk cookie → 401. Middleware strictly validates the JWT now
     (AUTH_TEST_PLAN test 7.5.8); it no longer silently passes bad
     tokens through to the route handler."""
-    res = client.get("/api/models", cookies={"access_token": "some-token"})
+    res = client.get(
+        "/api/models",
+        cookies={
+            "access_token": "some-token",
+            "csrf_token": "stale-csrf-token",
+        },
+    )
     assert res.status_code == 401
+    set_cookie_headers = res.headers.get_list("set-cookie")
+    assert any(
+        header.lower().startswith("access_token=") and "max-age=0" in header.lower()
+        for header in set_cookie_headers
+    )
+    assert any(
+        header.lower().startswith("csrf_token=") and "max-age=0" in header.lower()
+        for header in set_cookie_headers
+    )
 
 
 def test_protected_post_no_cookie_returns_401(client):
